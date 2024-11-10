@@ -1,4 +1,4 @@
-export type cLoginRequestType=
+export type cSignupRequestType=
 {
     email: string;
     password: string;
