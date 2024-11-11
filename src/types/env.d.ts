@@ -7,6 +7,8 @@ declare global
             PORT?: string | number;
             NODE_ENV?: 'development' | 'production';
             OAUTH_URL: string;
+            BC_HASH: string;
+            JWT_SECRET: string;
         }
     }
 }

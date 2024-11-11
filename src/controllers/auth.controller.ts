@@ -1,19 +1,54 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { cSignupRequestType } from '../types/types'
 import Validate from '../helpers/validate'
+import { PrismaClient } from '@prisma/client'
+import jwt from 'jsonwebtoken'
+import hash from '../helpers/hash'
 
 export const cSignup = async (request: FastifyRequest<{Body: cSignupRequestType}>, reply: FastifyReply)=>
 {
-    const
+    let
     {
         email,
         password
     } 
     =request.body
     
-    if(new Validate({must: 'email'}).condition(email) && password.length >= 8)
+    if(new Validate({must: 'email'}).condition(email) && password.length >= 8 && password.length <= 32)
     {
-        console.log('To be continued')
+        const prisma = new PrismaClient()
+        const user = await prisma.user.findUnique({ where: { email } })
+
+        if(user)
+        {
+            return reply.send({ code: 400, msg: 'User already exist' })
+        }
+
+        await prisma.user.create
+        (
+            {
+                data: {
+                    email,
+                    password: await new hash({ action: 'hash' }).data(password) ||'',
+                    balance: 0.00,
+                    createdAt: Date.now()
+                }
+            }
+        )
+
+        const token =jwt.sign
+        (
+            {
+                exp: Math.floor(Date.now() / 1000) + 172800,
+                data:
+                {
+                    email
+                }
+            }, 
+            process.env.JWT_SECRET
+        )
+
+        return reply.send({ code: 200, msg: 'Successfuly', token })
     }
 
     else
