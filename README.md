@@ -1,2 +1,2 @@
 # app
-App
+Prisma ORM & Fastify on BunJS
