@@ -1,5 +1,5 @@
 import bc from 'bcrypt'
-import type { HashOptionsInterface } from '../types/interfaces';
+import type { HashOptionsInterface } from '../types/interfaces'
 
 export default class Hash
 {
@@ -16,14 +16,14 @@ export default class Hash
         {
             try
             {
-                const hash = await bc.hash(s, parseInt(process.env.BC_HASH as string, 10) || 10);
-                return hash;
+                const hash = await bc.hash(s, parseInt(process.env.BC_HASH as string, 10) || 10)
+                return hash
             }
             
             catch(err)
             {
-                console.error(err);
-                return undefined;
+                console.error(err)
+                return undefined
             }
         }
     }

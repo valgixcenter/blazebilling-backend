@@ -36,19 +36,36 @@ export const cSignup = async (request: FastifyRequest<{Body: cSignupRequestType}
             }
         )
 
-        const token =jwt.sign
+        .then
         (
+            async r=>
             {
-                exp: Math.floor(Date.now() / 1000) + 172800,
-                data:
-                {
-                    email
-                }
-            }, 
-            process.env.JWT_SECRET
-        )
+                const token =jwt.sign
+                (
+                    {
+                        exp: Math.floor(Date.now() / 1000) + 172800,
+                        data:
+                        {
+                            email
+                        }
+                    }, 
+                    process.env.JWT_SECRET
+                )
 
-        return reply.send({ code: 200, msg: 'Successfuly', token })
+                await prisma.token.create
+                (
+                    {
+                        data: {
+                            owner: r.id,
+                            token,
+                            createdAt: Date.now()
+                        }
+                    }
+                )
+
+                return reply.send({ code: 200, msg: 'Successfuly', token })
+            }
+        )
     }
 
     else

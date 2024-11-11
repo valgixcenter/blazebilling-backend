@@ -17,3 +17,10 @@ model User {
   balance Float
   createdAt BigInt
 }
+
+model Token {
+  id Int @default(autoincrement()) @id
+  owner Int @unique
+  token String @unique
+  createdAt BigInt
+}
