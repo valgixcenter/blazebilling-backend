@@ -43,7 +43,6 @@ export const cSignup = async (request: FastifyRequest<{Body: cSignupRequestType}
                 const token =jwt.sign
                 (
                     {
-                        exp: Math.floor(Date.now() / 1000) + 172800,
                         data:
                         {
                             email
