@@ -1,5 +1,15 @@
 import type { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from "fastify"
 import prisma from '../database/prisma'
+import jwt from 'jsonwebtoken'
+import type { JWTtoken } from "../types/interfaces"
+
+declare module 'fastify'
+{
+    interface FastifyRequest
+    {
+        user?: JWTtoken;
+    }
+}
 
 export async function middleBase(req : FastifyRequest, rep : FastifyReply, done : HookHandlerDoneFunction)
 {
@@ -14,6 +24,8 @@ export async function middleBase(req : FastifyRequest, rep : FastifyReply, done 
             {
                 if((Number(T?.createdAt)+30*24*60*60*1000) > Date.now())
                 {
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JWTtoken
+                    req.user = decoded
                     done()
                 }
 
