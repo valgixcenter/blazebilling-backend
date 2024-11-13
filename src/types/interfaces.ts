@@ -5,6 +5,7 @@ export interface HashOptionsInterface
 
 export interface JWTtoken
 {
+    data: any;
     id: string;
     email: string;
 }
