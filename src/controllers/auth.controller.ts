@@ -1,9 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { cSignupRequestType, cLoginRequestType } from '../types/types'
-import Validate from '../helpers/validate'
 import prisma from '../database/prisma'
 import jwt from 'jsonwebtoken'
 import hash from '../helpers/hash'
+import { userSchema } from '../schemas/user.schema'
 
 export const cSignup = async (request: FastifyRequest<{Body: cSignupRequestType}>, reply: FastifyReply)=>
 {
@@ -13,64 +13,63 @@ export const cSignup = async (request: FastifyRequest<{Body: cSignupRequestType}
         password
     } 
     =request.body
-    
-    if(new Validate({must: 'email'}).condition(email) && password.length >= 8 && password.length <= 32)
-    {
-        const user = await prisma.user.findUnique({ where: { email } })
 
-        if(user)
+    const { error } = userSchema.validate({ email, password })
+    if (error)
+    {
+        return reply.code(400).send({ code: 400, msg: error.message })
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } })
+
+    if(user)
+    {
+        return reply.code(400).send({ code: 400, msg: 'User already exist' })
+    }
+
+    await prisma.user.create
+    (
         {
-            return reply.code(400).send({ code: 400, msg: 'User already exist' })
+            data: {
+                email,
+                password: await new hash({ action: 'hash' }).data(password) ||'',
+                balance: 0.00,
+                createdAt: Date.now()
+            }
         }
+    )
 
-        await prisma.user.create
-        (
-            {
-                data: {
-                    email,
-                    password: await new hash({ action: 'hash' }).data(password) ||'',
-                    balance: 0.00,
-                    createdAt: Date.now()
-                }
-            }
-        )
-
-        .then
-        (
-            async r=>
-            {
-                const token =jwt.sign
-                (
+    .then
+    (
+        async (r: any) =>
+        {
+            const token =jwt.sign
+            (
+                {
+                    data:
                     {
-                        data:
-                        {
-                            id: r.id,
-                            email
-                        }
-                    }, 
-                    process.env.JWT_SECRET
-                )
-
-                await prisma.token.create
-                (
-                    {
-                        data: {
-                            owner: r.id,
-                            token,
-                            createdAt: Date.now()
-                        }
+                        userId: r.id,
+                        email
                     }
-                )
+                }, 
+                process.env.JWT_SECRET
+            )
 
-                return reply.code(200).send({ code: 200, msg: 'Successfuly', token })
-            }
-        )
-    }
+            await prisma.token.create
+            (
+                {
+                    data: 
+                    {
+                        userId: r.id,
+                        token,
+                        createdAt: Date.now()
+                    }
+                }
+            )
 
-    else
-    {
-        return reply.code(400).send({ code: 400, msg: 'Bad request' })
-    }
+            return reply.code(200).send({ code: 200, msg: 'Successfuly', token })
+        }
+    )
 }
 
 export const cLogin = async (request: FastifyRequest<{Body: cLoginRequestType}>, reply: FastifyReply)=>
@@ -82,62 +81,36 @@ export const cLogin = async (request: FastifyRequest<{Body: cLoginRequestType}>,
     } 
     =request.body
 
-    if(new Validate({must: 'email'}).condition(email) && password)
+    const { error } = userSchema.validate({ email, password })
+    if (error)
     {
-        await prisma.user.findUnique({ where: { email } })
-        .then
-        (
-            async U=>
-            {
-                await prisma.token.findUnique({ where: { owner: U?.id } })
-                .then
-                (
-                    async T=>
+        return reply.code(400).send({ code: 400, msg: error.message })
+    }
+
+    await prisma.user.findUnique({ where: { email } })
+    .then
+    (
+        async U=>
+        {
+            await prisma.token.findFirst({ where: { userId: U?.id } })
+            .then
+            (
+                async T=>
+                {
+                    if((Number(T?.createdAt)+30*24*60*60*1000) > Date.now())
                     {
-                        if((Number(T?.createdAt)+30*24*60*60*1000) > Date.now())
-                        {
-                            return reply.code(200).send({ code: 200, msg: 'Successfuly logged', token: T?.token })
-                        }
-
-                        else
-                        {
-                            await prisma.token.delete({ where: { token: T?.token }})
-                            const token =jwt.sign
-                            (
-                                {
-                                    data:
-                                    {
-                                        id: U?.id,
-                                        email: U?.email
-                                    }
-                                }, 
-                                process.env.JWT_SECRET
-                            )
-                            await prisma.token.create
-                            (
-                                {
-                                    data: {
-                                        owner: Number(U?.id),
-                                        token,
-                                        createdAt: Date.now()
-                                    }
-                                }
-                            )
-
-                            return reply.code(200).send({ code: 200, msg: 'Successfly logged', token })
-                        }
+                        return reply.code(200).send({ code: 200, msg: 'Successfuly logged', token: T?.token })
                     }
-                )
-                .catch
-                (
-                    async e=>
+
+                    else
                     {
+                        await prisma.token.delete({ where: { token: T?.token }})
                         const token =jwt.sign
                         (
                             {
                                 data:
                                 {
-                                    id: U?.id,
+                                    userId: U?.id,
                                     email: U?.email
                                 }
                             }, 
@@ -146,8 +119,9 @@ export const cLogin = async (request: FastifyRequest<{Body: cLoginRequestType}>,
                         await prisma.token.create
                         (
                             {
-                                data: {
-                                    owner: Number(U?.id),
+                                data: 
+                                {
+                                    userId: Number(U?.id),
                                     token,
                                     createdAt: Date.now()
                                 }
@@ -156,20 +130,45 @@ export const cLogin = async (request: FastifyRequest<{Body: cLoginRequestType}>,
 
                         return reply.code(200).send({ code: 200, msg: 'Successfly logged', token })
                     }
-                )
-            }
-        )
-        .catch
-        (
-            e=>
-            {
-                return reply.code(400).send({ code: 400, msg: 'User not found' })
-            }
-        )
-    }
+                }
+            )
+            .catch
+            (
+                async e=>
+                {
+                    const token =jwt.sign
+                    (
+                        {
+                            data:
+                            {
+                                userId: U?.id,
+                                email: U?.email
+                            }
+                        }, 
+                        process.env.JWT_SECRET
+                    )
+                    await prisma.token.create
+                    (
+                        {
+                            data: 
+                            {
+                                userId: Number(U?.id),
+                                token,
+                                createdAt: Date.now()
+                            }
+                        }
+                    )
 
-    else
-    {
-        return reply.code(400).send({ code: 400, msg: 'Bad request' })
-    }
+                    return reply.code(200).send({ code: 200, msg: 'Successfly logged', token })
+                }
+            )
+        }
+    )
+    .catch
+    (
+        e=>
+        {
+            return reply.code(400).send({ code: 400, msg: 'User not found' })
+        }
+    )
 }

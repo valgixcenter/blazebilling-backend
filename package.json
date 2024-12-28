@@ -3,7 +3,9 @@
   "module": "./src/app.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run ./src/app.ts"
+    "start": "bun run ./src/app.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -19,6 +21,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "bcrypt": "^5.1.1",
     "fastify": "^5.1.0",
+    "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2"
   }
 }
