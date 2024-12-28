@@ -92,6 +92,16 @@ export const cLogin = async (request: FastifyRequest<{Body: cLoginRequestType}>,
     (
         async U=>
         {
+            if(!U)
+            {
+                return reply.code(400).send({ code: 400, msg: 'User not found' })
+            }
+
+            if(!await new hash({ action: 'compare' }).data(password, U.password))
+            {
+                return reply.code(400).send({ code: 400, msg: 'User not found' })
+            }
+
             await prisma.token.findFirst({ where: { userId: U?.id } })
             .then
             (

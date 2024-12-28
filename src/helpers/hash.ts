@@ -10,7 +10,7 @@ export default class Hash
         this.action = ops?.action
     }
 
-    async data(s : string) : Promise<string | undefined>
+    async data(s : string, hash? : string) : Promise<any | undefined>
     {
         if(this.action == 'hash')
         {
@@ -24,6 +24,21 @@ export default class Hash
             {
                 console.error(err)
                 return undefined
+            }
+        }
+
+        if(this.action == 'compare' && hash)
+        {
+            try
+            {
+                const compare = await bc.compare(s, hash)
+                return compare
+            }
+
+            catch(err)
+            {
+                console.error(err)
+                return false
             }
         }
     }
