@@ -4,5 +4,5 @@ import { cUserInfo } from '../../controllers/user/user.controller'
 
 export default async (fastify: FastifyInstance)=>
 {
-    fastify.get(`${process.env.API_URL}/user/info`, { preHandler:(rq, rp, d)=> middleBase(rq, rp, d) }, cUserInfo)
+    fastify.get(`${process.env.API_URL}/user/info`, { preHandler:(rq, rp)=> middleBase(rq, rp) }, cUserInfo)
 }

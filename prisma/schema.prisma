@@ -30,3 +30,12 @@ model Admin {
   password String
   createdAt BigInt
 }
+
+model Service {
+  id Int @default(autoincrement()) @id
+  name String
+  price Float
+  handler String
+  metadata String?
+  createdAt BigInt
+}

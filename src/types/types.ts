@@ -10,6 +10,14 @@ export type cLoginRequestType=
     password: string;
 }
 
+export type cAServiceAddType=
+{
+    name: string;
+    price: number;
+    handler: string;
+    metadata?: object;
+}
+
 export type validateHelperType=
 {
     must: string;
