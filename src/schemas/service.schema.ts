@@ -6,3 +6,8 @@ export const serviceAddSchema = Joi.object({
     handler: Joi.string().max(32).required(),
     metadata: Joi.object().optional()
 })
+
+export const serviceBuySchema = Joi.object({
+    serviceId: Joi.number().min(1).required()
+})
+

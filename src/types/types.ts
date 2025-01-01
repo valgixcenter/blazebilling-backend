@@ -22,3 +22,8 @@ export type validateHelperType=
 {
     must: string;
 }
+
+export type cServiceBuyType=
+{
+    serviceId: number;
+}

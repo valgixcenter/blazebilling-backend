@@ -14,6 +14,7 @@ model User {
   balance Float
   createdAt BigInt
   tokens Token[]
+  services UserService[]
 }
 
 model Token {
@@ -37,5 +38,13 @@ model Service {
   price Float
   handler String
   metadata String?
+  createdAt BigInt
+}
+
+model UserService {
+  id Int @default(autoincrement()) @id
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  metadata String
   createdAt BigInt
 }
