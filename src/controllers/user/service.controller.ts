@@ -123,3 +123,33 @@ export const cUserServiceList = async (request: FastifyRequest, reply: FastifyRe
         }
     )
 }
+
+export const cUserServiceById = async (request: FastifyRequest, reply: FastifyReply)=>
+{
+    const { id } = request.params as { id: string }
+    const userServices = await prisma.userService.findMany({ where: { userId: request.user?.data.userId, id: parseInt(id) } })
+
+    if(userServices.length == 0)
+    {
+        return reply.status(404).send({ code: 404, msg: 'User service not found' })
+    }
+    
+    return reply.status(200).send
+    (
+        { 
+            code: 200, 
+            msg: 'User services fetched successfully', 
+            data: userServices.map
+            (
+                userService=>
+                (
+                    {
+                        ...userService, 
+                        metadata: userService.metadata ? JSON.parse(userService.metadata) : null,
+                        createdAt: Number(userService.createdAt) 
+                    }
+                )
+            ) 
+        }
+    )
+}
