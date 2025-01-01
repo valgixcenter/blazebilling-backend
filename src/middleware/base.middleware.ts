@@ -11,42 +11,30 @@ declare module 'fastify'
     }
 }
 
-export async function middleBase(req : FastifyRequest, rep : FastifyReply, done : HookHandlerDoneFunction)
-{
-    if(req.headers['vgx-token'])
-    {
-        const token = req.headers['vgx-token'].toString()
+export async function middleBase(req: FastifyRequest, rep: FastifyReply) {
+    try {
+        if (!req.headers['vgx-token'])
+        {
+            return rep.code(401).send({ code: 401, msg: 'Unable to find token' });
+        }
 
-        await prisma.token.findUnique({ where: { token } })
-        .then
-        (
-            async T=>
-            {
-                if((Number(T?.createdAt)+30*24*60*60*1000) > Date.now())
-                {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JWTtoken
-                    req.user = decoded
-                    done()
-                }
+        const token = req.headers['vgx-token'].toString();
+        const tokenRecord = await prisma.token.findUnique({ where: { token } });
 
-                else
-                {
-                    await prisma.token.delete({ where: { token }})
-                    return rep.code(401).send({ code: 401, msg: 'Unable find token' })
-                }
-            }
-        )
-        .catch
-        (
-            async e=>
-            {
-                return rep.code(401).send({ code: 401, msg: 'Unable find token' })
-            }
-        )
-    }
+        if (!tokenRecord)
+        {
+            return rep.code(401).send({ code: 401, msg: 'Unable to find token' });
+        }
 
-    else
-    {
-        return rep.code(401).send({ code: 401, msg: 'Unable find token' })
+        if ((Number(tokenRecord.createdAt) + 30 * 24 * 60 * 60 * 1000) <= Date.now())
+        {
+            await prisma.token.delete({ where: { token } });
+            return rep.code(401).send({ code: 401, msg: 'Token expired' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JWTtoken;
+        req.user = decoded;
+    } catch (error) {
+        return rep.code(401).send({ code: 401, msg: 'Invalid token' });
     }
 }

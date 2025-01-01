@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun run ./src/app.ts",
+    "dev": "bun run --watch ./src/app.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

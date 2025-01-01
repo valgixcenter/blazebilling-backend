@@ -23,3 +23,19 @@ model Token {
   userId Int
   user User @relation(fields: [userId], references: [id])
 }
+
+model Admin {
+  id Int @default(autoincrement()) @id
+  email String @unique
+  password String
+  createdAt BigInt
+}
+
+model Service {
+  id Int @default(autoincrement()) @id
+  name String
+  price Float
+  handler String
+  metadata String?
+  createdAt BigInt
+}

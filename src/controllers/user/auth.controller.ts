@@ -1,9 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { cSignupRequestType, cLoginRequestType } from '../types/types'
-import prisma from '../database/prisma'
+import type { cSignupRequestType, cLoginRequestType } from '../../types/types'
+import prisma from '../../database/prisma'
 import jwt from 'jsonwebtoken'
-import hash from '../helpers/hash'
-import { userSchema } from '../schemas/user.schema'
+import hash from '../../helpers/hash'
+import { userSchema } from '../../schemas/user.schema'
 
 export const cSignup = async (request: FastifyRequest<{Body: cSignupRequestType}>, reply: FastifyReply)=>
 {
@@ -92,6 +92,16 @@ export const cLogin = async (request: FastifyRequest<{Body: cLoginRequestType}>,
     (
         async U=>
         {
+            if(!U)
+            {
+                return reply.code(400).send({ code: 400, msg: 'User not found' })
+            }
+
+            if(!await new hash({ action: 'compare' }).data(password, U.password))
+            {
+                return reply.code(400).send({ code: 400, msg: 'User not found' })
+            }
+
             await prisma.token.findFirst({ where: { userId: U?.id } })
             .then
             (

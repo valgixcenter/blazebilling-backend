@@ -8,12 +8,34 @@ const server = fastify()
 const registerRoutes = async () =>
 {
     const routesPath = path.join(__dirname, 'routes')
-    const files = fs.readdirSync(routesPath)
-    const routeFiles = files.filter(file => file.endsWith('.ts'))
-
-    for (const file of routeFiles)
+    
+    const getAllRouteFiles = (dirPath: string): string[] => 
     {
-        const filePath = path.join(routesPath, file)
+        const files = fs.readdirSync(dirPath)
+        let routeFiles: string[] = []
+        
+        for (const file of files)
+        {
+            const fullPath = path.join(dirPath, file)
+            
+            if (fs.statSync(fullPath).isDirectory()) 
+            {
+                routeFiles = routeFiles.concat(getAllRouteFiles(fullPath))
+            } 
+            
+            else if (file.endsWith('.ts'))
+            {
+                routeFiles.push(fullPath)
+            }
+        }
+        
+        return routeFiles
+    }
+
+    const routeFiles = getAllRouteFiles(routesPath)
+
+    for (const filePath of routeFiles)
+    {
         const routesModule = await import(filePath)
         
         if (typeof routesModule.default === 'function')
