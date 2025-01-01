@@ -134,3 +134,6 @@ dist
 prisma/dev.db
 prisma/migrations/*
 prisma/dev.db-journal
+
+# Ignore all modules folders
+**/modules/
